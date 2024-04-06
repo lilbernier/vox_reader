@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhdyqx0ptakpd"]
+
+[ext_resource type="Script" path="res://addons/vox_reader/scripts/voxel_mesh.gd" id="1_n1joh"]
+
+[node name="vox_test" type="Node3D"]
+script = ExtResource("1_n1joh")
+file_path = "res://addons/vox_reader/example/"
+file_name = "error.vox"
