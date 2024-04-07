@@ -4,10 +4,7 @@ class_name VoxelImporter extends Node
 
 
 static var PooledContent = []
-static var Debugger = true;
-
-func _ready():
-	pass
+static var Debugger = false;
 
 
 static func open(source_path, destination_path):
@@ -46,7 +43,7 @@ static func open(source_path, destination_path):
 			VoxelImporter.ReadChunk(vox, voxFile);
 			
 	file.close()
-	
+	return vox
 	
 static func ReadChunk(_voxData, _voxFile):
 	var chunk_id = _voxFile.get_string(4);
@@ -59,11 +56,11 @@ static func ReadChunk(_voxData, _voxFile):
 		'SIZE':
 			_voxData.current_index += 1;
 			#var model = vox.get_model();
-			#var x = file.get_32();
-			#var y = file.get_32();
-			#var z = file.get_32();
-			#model.size = Vector3(x, y, z);
-			#if VoxelImporter.Debugger: print('SIZE ', model.size);
+			var x = _voxFile.get_32();
+			var y = _voxFile.get_32();
+			var z = _voxFile.get_32();
+			_voxData.size = Vector3(x, y, z);
+			if VoxelImporter.Debugger: print('SIZE ', _voxData.size);
 		'XYZI':
 			#var model = vox.get_model();
 			if VoxelImporter.Debugger: print('XYZI');
@@ -71,20 +68,22 @@ static func ReadChunk(_voxData, _voxFile):
 				var x = _voxFile.get_8()
 				var y = _voxFile.get_8()
 				var z = _voxFile.get_8()
-				var c = _voxFile.get_8()
+				var c = _voxFile.get_8() #Color
 				var voxel = Vector3(x, y, z)
-				#model.voxels[voxel] = c - 1
+				_voxData.voxels[voxel] = c - 1
 				if VoxelImporter.Debugger: print('\t', voxel, ' ', c-1);
 		'RGBA':
 			if VoxelImporter.Debugger: print('RGBA');
 			
-			#vox.colors = []
-			#for _i in range(256):
-				#var r = float(file.get_8() / 255.0)
-				#var g = float(file.get_8() / 255.0)
-				#var b = float(file.get_8() / 255.0)
-				#var a = float(file.get_8() / 255.0)
-				#vox.colors.append(Color(r, g, b, a))
+			_voxData.colors = []
+			for _i in range(256):
+				var r = float(_voxFile.get_8() / 255.0)
+				var g = float(_voxFile.get_8() / 255.0)
+				var b = float(_voxFile.get_8() / 255.0)
+				var a = float(_voxFile.get_8() / 255.0)
+				if VoxelImporter.Debugger: print(str([r, g, b, a]));
+				
+				_voxData.colors.append(Color(r, g, b, a))
 		'nTRN':
 			if VoxelImporter.Debugger: print('nTRN');
 

@@ -1,8 +1,31 @@
-[gd_scene load_steps=2 format=3 uid="uid://dhdyqx0ptakpd"]
+[gd_scene load_steps=6 format=3 uid="uid://dhdyqx0ptakpd"]
 
 [ext_resource type="Script" path="res://addons/vox_reader/scripts/voxel_mesh.gd" id="1_n1joh"]
+[ext_resource type="Script" path="res://scripts/camera.gd" id="2_21c0e"]
 
-[node name="vox_test" type="Node3D"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0f4h3"]
+
+[sub_resource type="Sky" id="Sky_pfllq"]
+sky_material = SubResource("ProceduralSkyMaterial_0f4h3")
+
+[sub_resource type="Environment" id="Environment_ykhe0"]
+background_mode = 2
+sky = SubResource("Sky_pfllq")
+
+[node name="Node3D" type="Node3D"]
+
+[node name="vox_test" type="Node3D" parent="."]
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
 file_name = "error.vox"
+
+[node name="FreeLookCamera" type="Camera3D" parent="."]
+transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756496, 7.51561, 7.75949, 11.4465)
+script = ExtResource("2_21c0e")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ykhe0")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
