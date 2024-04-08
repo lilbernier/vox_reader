@@ -29,7 +29,6 @@ static func open(source_path, destination_path):
 		#if typeof(data_received) == TYPE_DICTIONARY: 
 			#print(data_received) # Prints dictionary else: print("Unexpected data")
 
-
 	var identifier = PackedByteArray([ file.get_8(), file.get_8(), file.get_8(), file.get_8() ]).get_string_from_ascii()
 	var version = file.get_32()
 	#print('Importing: ', source_path, ' (scale: ', scale, ', file version: ', version, ', greedy mesh: ', greedy, ', snap to ground: ', snaptoground, ')');
@@ -43,6 +42,7 @@ static func open(source_path, destination_path):
 			VoxelImporter.ReadChunk(vox, voxFile);
 			
 	file.close()
+	
 	return vox
 	
 static func ReadChunk(_voxData, _voxFile):
