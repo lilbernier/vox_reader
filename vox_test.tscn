@@ -19,8 +19,34 @@ script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
 file_name = "error.vox"
 
+[node name="Label3D" type="Label3D" parent="vox_test"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
+text = "Unoptimized"
+
+[node name="vox_test2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35406, 0, 0)
+script = ExtResource("1_n1joh")
+file_path = "res://addons/vox_reader/example/"
+file_name = "error.vox"
+generation_type = 1
+
+[node name="Label3D" type="Label3D" parent="vox_test2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
+text = "Greedy"
+
+[node name="vox_test3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5902, 0, 0)
+script = ExtResource("1_n1joh")
+file_path = "res://addons/vox_reader/example/"
+file_name = "error.vox"
+generation_type = 2
+
+[node name="Label3D" type="Label3D" parent="vox_test3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
+text = "Culled"
+
 [node name="FreeLookCamera" type="Camera3D" parent="."]
-transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756496, 7.51561, 7.75949, 11.4465)
+transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756495, 2.50333, 1.73248, 2.44911)
 script = ExtResource("2_21c0e")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]

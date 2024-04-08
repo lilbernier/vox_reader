@@ -4,8 +4,13 @@ class_name VoxelMesh extends Node
 @export var file_name:String
 var voxData = null
 @export_enum("Unoptimized", "Greedy", "Culled") var generation_type: int
-@export var collisions: bool = true
+
 @export var voxel_scale = .1;
+
+@export var collisions: bool = true
+
+@export var animated: bool = false
+
 
 static var MeshPool = []
 
@@ -13,10 +18,18 @@ func _ready():
 	voxData = VoxelImporter.open(file_path + file_name, null)
 	
 	match(generation_type):
-		0:
-			for v in voxData.voxels:
-				await get_tree().create_timer(.05).timeout
-				generate_block(v, voxData.voxels[v])
+		0: #Unoptimized
+			print('Unoptimized mesh.')
+			UnoptimizedGenerator.Generate(self, voxData)
+			#for v in voxData.voxels:
+				#await get_tree().create_timer(.05).timeout
+				#generate_block(v, voxData.voxels[v])
+		1:
+			print('Greedy mesh.')
+			GreedyGenerator.Generate(self, voxData)
+			
+		2:
+			print('Culled mesh.')
 		_:
 			print('Somehow you messed up the generation type')
 
