@@ -17,7 +17,7 @@ sky = SubResource("Sky_pfllq")
 [node name="vox_test" type="Node3D" parent="."]
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
-file_name = "error.vox"
+file_name = "barrel.vox"
 
 [node name="Label3D" type="Label3D" parent="vox_test"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
@@ -27,7 +27,7 @@ text = "Unoptimized"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35406, 0, 0)
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
-file_name = "error.vox"
+file_name = "barrel.vox"
 generation_type = 1
 
 [node name="Label3D" type="Label3D" parent="vox_test2"]

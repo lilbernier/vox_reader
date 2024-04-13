@@ -4,7 +4,8 @@ static func Generate(_root, _voxData):
 	for v in _voxData.voxels:
 		await _root.get_tree().create_timer(.05).timeout
 		UnoptimizedGenerator.GenerateBlock(_root,_voxData, v, _voxData.voxels[v])
-
+		
+		
 static func GenerateBlock(_root, _voxData, _position, _colorIndex):
 	var cube = MeshInstance3D.new()
 	cube.mesh = BoxMesh.new()

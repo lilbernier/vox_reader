@@ -6,36 +6,124 @@ static func Generate(_root, _voxData):
 	var surfaceTool: SurfaceTool = SurfaceTool.new()
 	surfaceTool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var faces = {}
-
+	var mins = Vector3.INF
+	var maxs = -Vector3.INF
 	
-	if _voxData.size() == 0:
+	if _voxData.voxels.size() == 0:
 		return surfaceTool.commit()
+		
+	for v in _voxData.voxels:
+		mins.x = min(mins.x, v.x)
+		mins.y = min(mins.y, v.y)
+		mins.z = min(mins.z, v.z)
+		maxs.x = max(maxs.x, v.x)
+		maxs.y = max(maxs.y, v.y)
+		maxs.z = max(maxs.z, v.z)
 	
-	#for v in _voxData:
-		#mins.x = min(mins.x, v.x)
-		#mins.y = min(mins.y, v.y)
-		#mins.z = min(mins.z, v.z)
-		#maxs.x = max(maxs.x, v.x)
-		#maxs.y = max(maxs.y, v.y)
-		#maxs.z = max(maxs.z, v.z)
-	
-	
-	
+	print('MIN' + str(mins))
+	print('MAX' + str(maxs))
+
 	for orientation in FACE_ORIENTATIONS:
-		GreedyGenerator.GenerateGeometryForOrientation(surfaceTool, _voxData, orientation)
+		GreedyGenerator.GenerateGeometryForOrientation(surfaceTool, _voxData, orientation, mins, maxs)
 	
+	surfaceTool.generate_normals()
+	var material = StandardMaterial3D.new()
+	material.vertex_color_is_srgb = true
+	material.vertex_color_use_as_albedo = true
+	material.roughness = 1
+	surfaceTool.set_material(material)
 	
-	pass
+	var mesh = MeshInstance3D.new()
+	mesh.mesh = surfaceTool.commit();
+	_root.add_child(mesh)
+	return 
 
-static func GenerateGeometryForOrientation(_surfaceTool, _voxData, _orientation):
+static func GenerateGeometryForOrientation(_surfaceTool, _voxData, _orientation, _mins, _maxs):
 	var depthAxis :int = DEPTH_AXIS[_orientation]
-	#var widthAxis :int = WIDTH_AXIS[_orientation]
-	#var heightAxis :int = HEIGHT_AXIS[_orientation]
-	#for slice in range(mins[depthAxis], maxs[depthAxis]+1):
-			#var faces :Dictionary = query_slice_faces(voxel_data, o, slice)
-			#if faces.size() > 0:
-				#generate_geometry(faces, o, slice, scale, snaptoground)
+	
+	for slice in range(_mins[depthAxis], _maxs[depthAxis] + 1):
+		var faces = GreedyGenerator.QuerySliceFaces(_voxData, depthAxis,_orientation, slice)
+		if(faces.size() > 0):
+			GreedyGenerator.GenerateGeometry(_surfaceTool,_voxData, faces, depthAxis, _orientation, slice, _mins, _maxs)
+			pass
 
+				
+				
+static func QuerySliceFaces(_voxData, _depthAxis, _orientation, _slice):
+	var ret = Dictionary()
+	for v in _voxData.voxels:
+		if(v[_depthAxis] == _slice  && _voxData.voxels.has(v + FACE_CHECKS[_orientation]) == false):
+			ret[v] = _voxData.voxels[v]
+	return ret
+
+
+static func GenerateGeometry(_surfaceTool,_voxData, _faces,_depthAxis, _orienation, _slice, _mins, _maxs):
+	var widthAxis :int = WIDTH_AXIS[_orienation]
+	var heightAxis :int = HEIGHT_AXIS[_orienation]
+	var v :Vector3 = Vector3()
+	v[_depthAxis] = _slice
+	
+	#Iterate the rows of the sparse volume
+	v[heightAxis] = _mins[heightAxis]
+	while v[heightAxis] <= _maxs[heightAxis]:
+		# Iterate over the voxels of the row
+		v[widthAxis] = _mins[widthAxis]
+		while v[widthAxis] <= _maxs[widthAxis]:
+			if _faces.has(v):
+				GreedyGenerator.GenerateGeometryForFace(_surfaceTool,_voxData, _faces, v, _orienation, _depthAxis, widthAxis, heightAxis, _mins)
+			v[widthAxis] += 1.0
+		v[heightAxis] += 1.0
+		
+static func GenerateGeometryForFace(_surfaceTool,_voxData, _faces, _face,_orienation, _depthAxis, _widthAxis, _heightAxis, _mins):
+	var width :int = GreedyGenerator.WidthQuery(_faces, _face, _widthAxis, _orienation)
+	var height :int = GreedyGenerator.HeightQuery(_faces, _face, _orienation, _heightAxis, _widthAxis, width)
+	
+	var grow :Vector3 = Vector3(1, 1, 1)
+	grow[_widthAxis] *= width
+	grow[_heightAxis] *= height
+
+	# Generate geometry
+	var yoffset = Vector3(0,0,0);
+	#if snaptoground : yoffset = Vector3(0, -mins.z * scale, 0);
+
+	var basis = Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP)
+	
+	_surfaceTool.set_color(_voxData.colors[_faces[_face]])
+	for vert in FACE_MESHES[_orienation]:
+		var xform = basis * (((vert * grow) + _face) * .1)
+		_surfaceTool.add_vertex(yoffset + xform)
+	
+	# Remove these faces from the pool
+	var v :Vector3 = Vector3()
+	v[_depthAxis] = _face[_depthAxis]
+	for iy in range(height):
+		v[_heightAxis] = _face[_heightAxis] + float(iy)
+		for ix in range(width):
+			v[_widthAxis] = _face[_widthAxis] + float(ix)
+			_faces.erase(v)
+	
+	return _faces 
+	
+static func WidthQuery(_faces, _face, _widthAxis, _orientation):
+	#var wd :int = width_axis[o]
+	var v = _face
+
+	while _faces.has(v) and _faces[v] == _faces[_face]:
+		v[_widthAxis] += 1.0
+	return int(v[_widthAxis] - _face[_widthAxis])
+	
+	
+static func HeightQuery(_faces, _face,  _orientation, _heightAxis, _widthAxis, _width):
+	#var hd :int = height_axis[o]
+	var c = _faces[_face]
+	var v  = _face
+	v[_heightAxis] += 1.0
+	while _faces.has(v) and _faces[v] == c and GreedyGenerator.WidthQuery(_faces, v, _widthAxis,_orientation) >= _width:
+		v[_heightAxis] += 1.0
+	return int(v[_heightAxis] - _face[_heightAxis])
+
+	
+	
 enum FaceOrientation {
 	Top = 0,
 	Bottom = 1,
@@ -98,71 +186,10 @@ static var FACE_CHECKS :Array = [
 
 # An array of the face meshes by orientation
 static var FACE_MESHES :Array = [
-	FRONT,
-	BACK,
-	LEFT,
-	RIGHT,
-	BOTTOM,
-	TOP,
+	Faces.FRONT,
+	Faces.BACK,
+	Faces.LEFT,
+	Faces.RIGHT,
+	Faces.BOTTOM,
+	Faces.TOP,
 ]
-
-
-static var TOP = [
-	Vector3( 1.0000, 1.0000, 1.0000),
-	Vector3( 0.0000, 1.0000, 1.0000),
-	Vector3( 0.0000, 1.0000, 0.0000),
-	
-	Vector3( 0.0000, 1.0000, 0.0000),
-	Vector3( 1.0000, 1.0000, 0.0000),
-	Vector3( 1.0000, 1.0000, 1.0000),
-];
-
-static var BOTTOM = [
-	Vector3( 0.0000, 0.0000, 0.0000),
-	Vector3( 0.0000, 0.0000, 1.0000),
-	Vector3( 1.0000, 0.0000, 1.0000),
-	
-	Vector3( 1.0000, 0.0000, 1.0000),
-	Vector3( 1.0000, 0.0000, 0.0000),
-	Vector3( 0.0000, 0.0000, 0.0000),
-];
-
-static var FRONT = [
-	Vector3( 0.0000, 1.0000, 1.0000),
-	Vector3( 1.0000, 1.0000, 1.0000),
-	Vector3( 1.0000, 0.0000, 1.0000),
-	
-	Vector3( 1.0000, 0.0000, 1.0000),
-	Vector3( 0.0000, 0.0000, 1.0000),
-	Vector3( 0.0000, 1.0000, 1.0000),
-];
-
-static var BACK = [
-	Vector3( 1.0000, 0.0000, 0.0000),
-	Vector3( 1.0000, 1.0000, 0.0000),
-	Vector3( 0.0000, 1.0000, 0.0000),
-	
-	Vector3( 0.0000, 1.0000, 0.0000),
-	Vector3( 0.0000, 0.0000, 0.0000),
-	Vector3( 1.0000, 0.0000, 0.0000)
-];
-
-const LEFT = [
-	Vector3( 0.0000, 1.0000, 1.0000),
-	Vector3( 0.0000, 0.0000, 1.0000),
-	Vector3( 0.0000, 0.0000, 0.0000),
-	
-	Vector3( 0.0000, 0.0000, 0.0000),
-	Vector3( 0.0000, 1.0000, 0.0000),
-	Vector3( 0.0000, 1.0000, 1.0000),
-];
-
-const RIGHT = [
-	Vector3( 1.0000, 1.0000, 1.0000),
-	Vector3( 1.0000, 1.0000, 0.0000),
-	Vector3( 1.0000, 0.0000, 0.0000),
-	
-	Vector3( 1.0000, 0.0000, 0.0000),
-	Vector3( 1.0000, 0.0000, 1.0000),
-	Vector3( 1.0000, 1.0000, 1.0000),
-];

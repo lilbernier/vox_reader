@@ -16,7 +16,8 @@ static var MeshPool = []
 
 func _ready():
 	voxData = VoxelImporter.open(file_path + file_name, null)
-	
+	var time_start = Time.get_ticks_usec()
+
 	match(generation_type):
 		0: #Unoptimized
 			print('Unoptimized mesh.')
@@ -32,7 +33,11 @@ func _ready():
 			print('Culled mesh.')
 		_:
 			print('Somehow you messed up the generation type')
-
+	
+	var time_now = Time.get_ticks_usec()
+	var time_elapsed = time_now - time_start
+	print(time_elapsed)
+	
 func generate_block(_position, _colorIndex):
 	var cube = MeshInstance3D.new()
 	cube.mesh = BoxMesh.new()
