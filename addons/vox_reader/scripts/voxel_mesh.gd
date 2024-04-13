@@ -12,11 +12,10 @@ var voxData = null
 @export var animated: bool = false
 
 
-static var MeshPool = []
-
 func _ready():
 	voxData = VoxelImporter.open(file_path + file_name, null)
-	var time_start = Time.get_ticks_usec()
+	var time_start = Time.get_ticks_msec()
+
 
 	match(generation_type):
 		0: #Unoptimized
@@ -26,17 +25,18 @@ func _ready():
 				#await get_tree().create_timer(.05).timeout
 				#generate_block(v, voxData.voxels[v])
 		1:
-			print('Greedy mesh.')
-			GreedyGenerator.Generate(self, voxData)
-			
+			#for i in 200:
+				#print('Greedy mesh.')
+			GreedyGenerator.Generate(self, voxData, file_name)
 		2:
-			print('Culled mesh.')
+			pass
+			#print('Culled mesh.')
 		_:
 			print('Somehow you messed up the generation type')
 	
-	var time_now = Time.get_ticks_usec()
+	var time_now = Time.get_ticks_msec()
 	var time_elapsed = time_now - time_start
-	print(time_elapsed)
+	print('GENERATOR TYPE: ' + str(generation_type) + ' ' + str(time_elapsed))
 	
 func generate_block(_position, _colorIndex):
 	var cube = MeshInstance3D.new()

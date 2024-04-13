@@ -2,7 +2,7 @@ class_name UnoptimizedGenerator
 
 static func Generate(_root, _voxData):
 	for v in _voxData.voxels:
-		await _root.get_tree().create_timer(.05).timeout
+		#await _root.get_tree().create_timer(.05).timeout
 		UnoptimizedGenerator.GenerateBlock(_root,_voxData, v, _voxData.voxels[v])
 		
 		

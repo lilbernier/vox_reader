@@ -1,13 +1,23 @@
 class_name GreedyGenerator
 
+static var PooledMeshes = {}
 
-
-static func Generate(_root, _voxData):
+static func Generate(_root, _voxData, _name):
+	
+	if(GreedyGenerator.PooledMeshes.has(_name)):
+		var mesh = MeshInstance3D.new()
+		mesh.mesh = GreedyGenerator.PooledMeshes[_name].commit();
+		_root.add_child(mesh)
+		print('grabbed pooled mesh')
+		return mesh
+		
 	var surfaceTool: SurfaceTool = SurfaceTool.new()
 	surfaceTool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var faces = {}
 	var mins = Vector3.INF
 	var maxs = -Vector3.INF
+	
+	surfaceTool.set_smooth_group(-1)
 	
 	if _voxData.voxels.size() == 0:
 		return surfaceTool.commit()
@@ -33,10 +43,12 @@ static func Generate(_root, _voxData):
 	material.roughness = 1
 	surfaceTool.set_material(material)
 	
+	GreedyGenerator.PooledMeshes[_name] = surfaceTool;
+	
 	var mesh = MeshInstance3D.new()
 	mesh.mesh = surfaceTool.commit();
 	_root.add_child(mesh)
-	return 
+	return mesh
 
 static func GenerateGeometryForOrientation(_surfaceTool, _voxData, _orientation, _mins, _maxs):
 	var depthAxis :int = DEPTH_AXIS[_orientation]
