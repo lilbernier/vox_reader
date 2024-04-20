@@ -3,16 +3,17 @@ class_name GreedyGenerator
 static var PooledMeshes = {}
 
 static func Generate(_root, _voxData, _name):
-	
-	if(GreedyGenerator.PooledMeshes.has(_name)):
-		var mesh = MeshInstance3D.new()
-		mesh.mesh = GreedyGenerator.PooledMeshes[_name].commit();
-		_root.add_child(mesh)
-		print('grabbed pooled mesh')
-		return mesh
+	if(_name):
+		if(GreedyGenerator.PooledMeshes.has(_name)):
+			var mesh = MeshInstance3D.new()
+			mesh.mesh = GreedyGenerator.PooledMeshes[_name].commit();
+			_root.add_child(mesh)
+			print('grabbed pooled mesh')
+			return mesh
 		
 	var surfaceTool: SurfaceTool = SurfaceTool.new()
 	surfaceTool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
 	var faces = {}
 	var mins = Vector3.INF
 	var maxs = -Vector3.INF
@@ -43,12 +44,51 @@ static func Generate(_root, _voxData, _name):
 	material.roughness = 1
 	surfaceTool.set_material(material)
 	
-	GreedyGenerator.PooledMeshes[_name] = surfaceTool;
+	if(_name): GreedyGenerator.PooledMeshes[_name] = surfaceTool;
 	
 	var mesh = MeshInstance3D.new()
 	mesh.mesh = surfaceTool.commit();
 	_root.add_child(mesh)
+		
 	return mesh
+
+
+static func GenerateCollisionMesh(_originalVoxelData):
+	var collisionSurface: SurfaceTool = SurfaceTool.new()
+	collisionSurface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var faces = {}
+	var mins = Vector3.INF
+	var maxs = -Vector3.INF
+	
+	collisionSurface.set_smooth_group(-1)
+	
+	var _voxData = VoxelData.new()
+	_voxData.voxels = _originalVoxelData.voxels.duplicate()
+	_voxData.colors = _originalVoxelData.colors.duplicate()
+	
+	if _voxData.voxels.size() == 0:
+		return collisionSurface.commit()
+		
+	for v in _voxData.voxels:
+		mins.x = min(mins.x, v.x)
+		mins.y = min(mins.y, v.y)
+		mins.z = min(mins.z, v.z)
+		maxs.x = max(maxs.x, v.x)
+		maxs.y = max(maxs.y, v.y)
+		maxs.z = max(maxs.z, v.z)
+		_voxData.voxels[v] = 0 #Set it to one color.
+	
+	print('MIN' + str(mins))
+	print('MAX' + str(maxs))
+
+	for orientation in FACE_ORIENTATIONS:
+		GreedyGenerator.GenerateGeometryForOrientation(collisionSurface, _voxData, orientation, mins, maxs)
+	
+	collisionSurface.generate_normals()
+	
+	return collisionSurface.commit();
+
 
 static func GenerateGeometryForOrientation(_surfaceTool, _voxData, _orientation, _mins, _maxs):
 	var depthAxis :int = DEPTH_AXIS[_orientation]
@@ -64,6 +104,7 @@ static func GenerateGeometryForOrientation(_surfaceTool, _voxData, _orientation,
 static func QuerySliceFaces(_voxData, _depthAxis, _orientation, _slice):
 	var ret = Dictionary()
 	for v in _voxData.voxels:
+		#This line is checking the colors, to the slice for the specific 'Slice' (think of bread)
 		if(v[_depthAxis] == _slice  && _voxData.voxels.has(v + FACE_CHECKS[_orientation]) == false):
 			ret[v] = _voxData.voxels[v]
 	return ret

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dhdyqx0ptakpd"]
+[gd_scene load_steps=7 format=3 uid="uid://dhdyqx0ptakpd"]
 
 [ext_resource type="Script" path="res://addons/vox_reader/scripts/voxel_mesh.gd" id="1_n1joh"]
 [ext_resource type="Script" path="res://scripts/camera.gd" id="2_21c0e"]
@@ -16,27 +16,20 @@ volumetric_fog_density = 0.7527
 volumetric_fog_albedo = Color(0.266667, 0.231373, 0.145098, 1)
 volumetric_fog_emission = Color(0.164706, 0.164706, 0.164706, 1)
 
+[sub_resource type="CylinderMesh" id="CylinderMesh_rxrpc"]
+
 [node name="Node3D" type="Node3D"]
 
 [node name="vox_test" type="Node3D" parent="."]
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
-file_name = "barrel.vox"
-generation_type = 1
-
-[node name="Label3D" type="Label3D" parent="vox_test"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
-text = "Unoptimized"
+file_name = "cube.vox"
 
 [node name="vox_test2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35406, 0, 0)
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
 file_name = "barrel.vox"
-
-[node name="Label3D" type="Label3D" parent="vox_test2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.164641, -0.113762, 0.677866)
-text = "Greedy"
 
 [node name="FreeLookCamera" type="Camera3D" parent="."]
 transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756495, 2.50333, 1.73248, 2.44911)
@@ -50,3 +43,11 @@ environment = SubResource("Environment_ykhe0")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
 transform = Transform3D(0.921518, 0.16207, 0.3529, 0, 0.908749, -0.417344, -0.388336, 0.38459, 0.837428, 0, 0, 0)
 shadow_enabled = true
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.66377, 0, 0)
+mesh = SubResource("CylinderMesh_rxrpc")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D2"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D2/StaticBody3D"]
