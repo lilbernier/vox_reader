@@ -9,35 +9,45 @@ var voxData = null
 
 @export var collisions: bool = true
 
-var collider = null
 
 enum GEN_TYPE{
 	GREEDY,
 	CUBE
 }
 
+var mesh_instance = null
+var collision_body = null
+
+
 func _ready():
 	voxData = VoxelImporter.open(file_path + file_name, null)
-	var time_start = Time.get_ticks_msec()
+	print('Amount Voxels ' + str(voxData.voxels.size()))
+	generate(true)
+	#print(voxData.voxels)
+	
+	#await self.get_tree().create_timer(5).timeout
+	#var timeWait = .75
+	#destroy_on_point(Vector3(0, 1, 0))
+	#await self.get_tree().create_timer(timeWait).timeout
+	#destroy_on_point(Vector3(1, 0, 0))
+	#await self.get_tree().create_timer(timeWait).timeout
+	#destroy_on_point(Vector3(1, 1, 0))	
+	#await self.get_tree().create_timer(timeWait).timeout
+	#destroy_on_point(Vector3(1, 1,1))
+	#await self.get_tree().create_timer(timeWait).timeout
+	#destroy_on_point(Vector3(0, 1,1))	
+	#await self.get_tree().create_timer(timeWait).timeout
+	#destroy_on_point(Vector3(1, 0,1))			
 
+func generate(_initial = false):
+	var time_start = Time.get_ticks_msec()
 	match(generation_type):
 		GEN_TYPE.GREEDY: #GREEDY
-			#for i in 200:
-				#print('Greedy mesh.')
-			#for v in voxData.voxels:
-				#voxData.voxels[v] = 0
-
-				
-					
-			var mesh = GreedyGenerator.Generate(self, voxData, file_name)
-			#mesh.create_debug_tangents()
-			#mesh.create_trimesh_collision()
-			
+			var useFileName = file_name if _initial else null
+			var mesh = GreedyGenerator.Generate(self, voxData, useFileName)
+			mesh_instance = mesh
 			var collisionMesh = GreedyGenerator.GenerateCollisionMesh(voxData)
 			if(collisionMesh):
-				#var shape = ConcavePolygonShape3D.new()
-				#shape.set_faces(collisionMesh.surface_get_primitive_type())
-				#add_child(shape)
 				var collisionMeshInstance = MeshInstance3D.new()
 				collisionMeshInstance.mesh = collisionMesh
 				add_child(collisionMeshInstance)			
@@ -50,10 +60,8 @@ func _ready():
 				
 				if(staticBody):
 					staticBody.reparent(mesh)
+					collision_body = staticBody
 					collisionMeshInstance.queue_free()	
-				#collisionMeshInstance.create_debug_tangents()
-				
-	
 		GEN_TYPE.CUBE: #CUBE
 			print('Unoptimized mesh.')
 			var meshes = UnoptimizedGenerator.Generate(self, voxData)
@@ -67,6 +75,16 @@ func _ready():
 	var time_now = Time.get_ticks_msec()
 	var time_elapsed = time_now - time_start
 	print('GENERATOR TYPE: ' + str(generation_type) + ' ' + str(time_elapsed))
+
+
+func clear_mesh():
+	if(mesh_instance): mesh_instance.queue_free()
+	if(collision_body): collision_body.queue_free()
+
+
+func destroy_on_point(_point):
+	if(!voxData.voxels.has(_point)): return
+	voxData.voxels.erase(_point)
+	clear_mesh()
+	generate(false)
 	
-
-

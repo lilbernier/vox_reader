@@ -23,13 +23,7 @@ volumetric_fog_emission = Color(0.164706, 0.164706, 0.164706, 1)
 [node name="vox_test" type="Node3D" parent="."]
 script = ExtResource("1_n1joh")
 file_path = "res://addons/vox_reader/example/"
-file_name = "cube.vox"
-
-[node name="vox_test2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35406, 0, 0)
-script = ExtResource("1_n1joh")
-file_path = "res://addons/vox_reader/example/"
-file_name = "barrel.vox"
+file_name = "tree.vox"
 
 [node name="FreeLookCamera" type="Camera3D" parent="."]
 transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756495, 2.50333, 1.73248, 2.44911)
