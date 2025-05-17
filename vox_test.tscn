@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://dhdyqx0ptakpd"]
 
-[ext_resource type="Script" path="res://addons/vox_reader/scripts/voxel_mesh.gd" id="1_n1joh"]
+[ext_resource type="Script" path="res://addons/vox_reader/scripts/voxel_mesh2.gd" id="1_wvofu"]
 [ext_resource type="Script" path="res://scripts/camera.gd" id="2_21c0e"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0f4h3"]
@@ -20,13 +20,14 @@ volumetric_fog_emission = Color(0.164706, 0.164706, 0.164706, 1)
 
 [node name="Node3D" type="Node3D"]
 
-[node name="vox_test" type="Node3D" parent="."]
-script = ExtResource("1_n1joh")
+[node name="vox_test2" type="Node3D" parent="."]
+script = ExtResource("1_wvofu")
 file_path = "res://addons/vox_reader/example/"
-file_name = "tree.vox"
+file_name = "cars.vox"
+generation_type = 3
 
 [node name="FreeLookCamera" type="Camera3D" parent="."]
-transform = Transform3D(0.866025, -0.243389, 0.436763, 0, 0.873526, 0.486778, -0.5, -0.421562, 0.756495, 2.50333, 1.73248, 2.44911)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.50333, 1.73248, 10.6084)
 script = ExtResource("2_21c0e")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]

@@ -1,14 +1,18 @@
-class_name VoxelMesh extends Node
+class_name VoxelMesh2 extends Node
 
 @export var file_path:String
 @export var file_name:String
-var voxData = null
+var voxData: VoxelData
 @export var generation_type: GEN_TYPE
 
 @export var voxel_scale = .1;
 
 @export var collisions: bool = true
 
+var voxel_map: Dictionary = {}  # Vector3i -> color_index
+var shared_mesh: BoxMesh
+var shared_materials: Dictionary = {}  # color_index -> material
+var palette: Array
 
 enum GEN_TYPE{
 	GREEDY,
@@ -115,27 +119,45 @@ func destroy_on_point(_point):
 	
 	
 	
-	
-func gpt2():
-	var voxels = voxData.voxels
-	var palette = voxData.colors
-
-	var mesh = BoxMesh.new()
-	mesh.size = Vector3.ONE
-
-	var color_groups = {}  # color_index: [Vector3, Vector3, ...]
-
+func _build_voxel_map(voxels):
+	voxel_map.clear()
 	for voxel in voxels:
-		var color_index = voxData.voxels[voxel] #voxel.color_index
-		if not color_groups.has(color_index):
-			color_groups[color_index] = []
-		color_groups[color_index].append(Vector3(voxel.x, voxel.y, voxel.z))
+		var pos = Vector3i(voxel.x, voxel.y, voxel.z)
+		voxel_map[pos] = voxData.voxels[voxel]
 
-	for color_index in color_groups.keys():
-		var positions = color_groups[color_index]
+
+func _prepare_shared_mesh_and_materials():
+	shared_mesh = BoxMesh.new()
+	shared_mesh.size = Vector3.ONE
+	shared_materials.clear()
+
+	for i in palette.size():
+		var color = palette[i]
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = color
+		shared_materials[i] = mat
+			
+			
+func _rebuild_multimesh():
+	# Clear old meshes
+	for child in get_children():
+		if child is MultiMeshInstance3D:
+			child.queue_free()
+
+	# Group voxels by color
+	var grouped := {}
+	for pos in voxel_map.keys():
+		var color_index = voxel_map[pos]
+		if not grouped.has(color_index):
+			grouped[color_index] = []
+		grouped[color_index].append(pos)
+
+	# Recreate optimized MultiMeshInstances
+	for color_index in grouped.keys():
+		var positions = grouped[color_index]
 
 		var multimesh = MultiMesh.new()
-		multimesh.mesh = mesh
+		multimesh.mesh = shared_mesh
 		multimesh.transform_format = MultiMesh.TRANSFORM_3D
 		multimesh.instance_count = positions.size()
 
@@ -143,13 +165,88 @@ func gpt2():
 			var xform = Transform3D.IDENTITY.translated(positions[i])
 			multimesh.set_instance_transform(i, xform)
 
-		var color = palette[color_index]
-		var material = StandardMaterial3D.new()
-		material.albedo_color = color
-
 		var mm_instance = MultiMeshInstance3D.new()
 		mm_instance.multimesh = multimesh
-		mm_instance.material_override = material
+		mm_instance.material_override = shared_materials[color_index]
 
 		add_child(mm_instance)
+
+func gpt2():
 	
+	palette = voxData.colors
+	_build_voxel_map(voxData.voxels)
+	_prepare_shared_mesh_and_materials()
+	_rebuild_multimesh()
+	
+	return
+	
+	#var voxels = voxData.voxels
+	#var palette = voxData.colors
+#
+	#var mesh = BoxMesh.new()
+	#mesh.size = Vector3.ONE
+#
+	#var color_groups = {}  # color_index: [Vector3, Vector3, ...]
+#
+	#for voxel in voxels:
+		#var color_index = voxData.voxels[voxel] #voxel.color_index
+		#if not color_groups.has(color_index):
+			#color_groups[color_index] = []
+		#color_groups[color_index].append(Vector3(voxel.x, voxel.y, voxel.z))
+#
+	#for color_index in color_groups.keys():
+		#var positions = color_groups[color_index]
+#
+		#var multimesh = MultiMesh.new()
+		#multimesh.mesh = mesh
+		#multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		#multimesh.instance_count = positions.size()
+#
+		#for i in positions.size():
+			#var xform = Transform3D.IDENTITY.translated(positions[i])
+			#multimesh.set_instance_transform(i, xform)
+#
+		#var color = palette[color_index]
+		#var material = StandardMaterial3D.new()
+		#material.albedo_color = color
+#
+		#var mm_instance = MultiMeshInstance3D.new()
+		#mm_instance.multimesh = multimesh
+		#mm_instance.material_override = material
+#
+		#add_child(mm_instance)
+	
+func _input(event):
+	if event is InputEventMouseButton and event.pressed:
+		var cam = get_viewport().get_camera_3d()
+		var hit_pos = cam.global_transform.origin + cam.global_transform.basis.z * -20.0  # 10 units in front of camera
+		_erase_voxels(hit_pos, 5)
+	
+	#if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		#var cam = get_viewport().get_camera_3d()
+		#var ray_origin = cam.project_ray_origin(event.position)
+		#var ray_dir = cam.project_ray_normal(event.position)
+#
+		#var space_state = get_world_3d().direct_space_state
+		#var result = space_state.intersect_ray(
+			#ray_origin,
+			#ray_origin + ray_dir * 100.0,
+			#[]
+			##collision_mask = 1
+		#)
+#
+		#if result.has("position"):
+			#var hit_pos = result["position"]
+			#_erase_voxels(hit_pos, brush_radius)
+	
+func _erase_voxels(center: Vector3, radius: float):
+	var to_remove = []
+
+	for pos in voxel_map.keys():
+		if Vector3(pos).distance_to(center) <= radius:
+			to_remove.append(pos)
+
+	for pos in to_remove:
+		voxel_map.erase(pos)
+
+	_rebuild_multimesh()
